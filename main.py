@@ -234,7 +234,7 @@ if query:
                     kpi_cols = st.columns(len(kpis))
                     i = 0
                     for k, v in kpis.items():
-                        with kpi_cols\[i]:
+                        with kpi_cols/[i]:
                             st.metric(label=k, value=v)
                         i += 1
 
