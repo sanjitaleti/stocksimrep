@@ -3,7 +3,7 @@ import yfinance as yf
 from typing import Dict, Optional
 from groq import Groq
 import pandas as pd
-#import plotly.express as px  # Removed plotly
+import altair as alt
 import numpy as np
 import os
 
@@ -30,11 +30,11 @@ def extract_stock_from_query(query: str) -> str:
 
         completion = client.chat.completions.create(
     model="llama-3.3-70b-versatile",
-    messages=messages,  # <-- Pass the actual messages list
+    messages=messages,
     temperature=0.6,
     max_completion_tokens=4096,
     top_p=0.95,
-    stream=False,  # Also, set stream=False unless you plan to handle streaming tokens manually
+    stream=False,
     stop=None,
 )
 
@@ -81,14 +81,27 @@ def format_stock_info(stock: Dict) -> str:
     )
 
 # === FUNCTION TO FETCH STOCK DATA AND GENERATE A CHART ===
-def generate_stock_chart(symbol: str):  # Changed px.Figure to pd.DataFrame
+def generate_stock_chart(symbol: str):
     try:
-        data = yf.download(symbol, period="1y")  # Download 1 year of data
+        data = yf.download(symbol, period="1y").reset_index()
         if data.empty:
             st.error(f"❌ No data found for {symbol}.")
             return None
 
-        return data  # Returning the dataframe to be used with st.line_chart
+        # Define the color gradient
+        gradient_colors = ['#FFD700', '#FFA500', '#FF4500'] # Example: Gold to Orange to Red
+
+        # Create Altair chart with gradient line
+        chart = alt.Chart(data).mark_line().encode(
+            x=alt.X('Date:T', title='Date'),
+            y=alt.Y('Close:Q', title='Close Price'),
+            color=alt.Color('Close:Q', scale=alt.Scale(range=gradient_colors)),
+            tooltip=['Date:T', 'Close:Q']
+        ).properties(
+            title=f'{symbol.upper()} Stock Price (1 Year)'
+        ).interactive()
+
+        return chart
 
     except Exception as e:
         st.error(f"❌ Chart Generation Error: {str(e)}")
@@ -220,7 +233,7 @@ if query:
                 st.subheader(f"Stock Performance: {stock['name']} ({stock['symbol']})")
                 dynamic_chart = generate_stock_chart(extracted)
                 if dynamic_chart is not None:
-                    st.line_chart(dynamic_chart["Close"], use_container_width=True)
+                    st.altair_chart(dynamic_chart, use_container_width=True)
 
                 prediction = predict_stock_price(extracted)
                 if prediction:
@@ -253,19 +266,19 @@ st.subheader("Popular Stocks at a Glance")
 prebuilt_symbols = ["AAPL", "MSFT", "GOOG", "AMZN", "TSLA", "NVDA"]
 cols = st.columns(3)
 for i, symbol in enumerate(prebuilt_symbols):
-    with cols[i % 3]:
+    with cols.empty()[i % 3]:
         chart = generate_stock_chart(symbol)
         if chart is not None:
             st.caption(symbol)
-            st.line_chart(chart["Close"], use_container_width=True)
+            st.altair_chart(chart, use_container_width=True)
 
 prebuilt_symbols_bottom = ["JPM", "V", "UNH"]
 cols_bottom = st.columns(3)
 for i, symbol in enumerate(prebuilt_symbols_bottom):
-    with cols_bottom[i % 3]:
+    with cols_bottom.empty()[i % 3]:
         chart = generate_stock_chart(symbol)
         if chart is not None:
             st.caption(symbol)
-            st.line_chart(chart["Close"], use_container_width=True)
+            st.altair_chart(chart, use_container_width=True)
 
 st.info("Enter a stock symbol in the search bar above for detailed information and predictions.")
