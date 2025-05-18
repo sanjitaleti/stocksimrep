@@ -3,7 +3,7 @@ import yfinance as yf
 from typing import Dict, Optional
 from groq import Groq
 import pandas as pd
-import altair as alt
+#import plotly.express as px  # Removed plotly
 import numpy as np
 import os
 
@@ -30,11 +30,11 @@ def extract_stock_from_query(query: str) -> str:
 
         completion = client.chat.completions.create(
     model="llama-3.3-70b-versatile",
-    messages=messages,
+    messages=messages,  # <-- Pass the actual messages list
     temperature=0.6,
     max_completion_tokens=4096,
     top_p=0.95,
-    stream=False,
+    stream=False,  # Also, set stream=False unless you plan to handle streaming tokens manually
     stop=None,
 )
 
@@ -81,42 +81,17 @@ def format_stock_info(stock: Dict) -> str:
     )
 
 # === FUNCTION TO FETCH STOCK DATA AND GENERATE A CHART ===
-@st.cache_data  # Apply caching
-def generate_stock_chart(symbol: str):
+def generate_stock_chart(symbol: str):  # Changed px.Figure to pd.DataFrame
     try:
-        data = yf.download(symbol, period="1y").reset_index()
+        data = yf.download(symbol, period="1y")  # Download 1 year of data
         if data.empty:
-            st.warning(f"⚠️ No data found for {symbol}. Please try again later.") # Use warning instead of error
+            st.error(f"❌ No data found for {symbol}.")
             return None
 
-        # Convert 'Date' column to datetime objects
-        try:
-            data['Date'] = pd.to_datetime(data['Date'])
-        except KeyError:
-            st.error(f"❌ Date column not found in data for {symbol}.")
-            return None
-
-        # Define the color gradient
-        gradient_colors = ['#FFD700', '#FFA500', '#FF4500']  # Example: Gold to Orange to Red
-
-        # Create Altair chart with gradient line
-        try:
-            chart = alt.Chart(data).mark_line().encode(
-                x=alt.X('Date:T', title='Date'),  # T specifies time type
-                y=alt.Y('Close:Q', title='Close Price'),
-                color=alt.Color('Close:Q', scale=alt.Scale(range=gradient_colors)),
-                tooltip=['Date:T', 'Close:Q']
-            ).properties(
-                title=f'{symbol.upper()} Stock Price (1 Year)'
-            ).interactive()
-            return chart
-        except Exception as e:
-            st.error(f"❌ Chart rendering error for {symbol}: {e}")
-            return None
-
+        return data  # Returning the dataframe to be used with st.line_chart
 
     except Exception as e:
-        st.error(f"❌ Chart Generation Error for {symbol}: {str(e)}")
+        st.error(f"❌ Chart Generation Error: {str(e)}")
         return None
 
 # === FUNCTION TO GET KPIS ===
@@ -245,7 +220,7 @@ if query:
                 st.subheader(f"Stock Performance: {stock['name']} ({stock['symbol']})")
                 dynamic_chart = generate_stock_chart(extracted)
                 if dynamic_chart is not None:
-                    st.altair_chart(dynamic_chart, use_container_width=True)
+                    st.line_chart(dynamic_chart["Close"], use_container_width=True)
 
                 prediction = predict_stock_price(extracted)
                 if prediction:
@@ -282,7 +257,7 @@ for i, symbol in enumerate(prebuilt_symbols):
         chart = generate_stock_chart(symbol)
         if chart is not None:
             st.caption(symbol)
-            st.altair_chart(chart, use_container_width=True)
+            st.line_chart(chart["Close"], use_container_width=True)
 
 prebuilt_symbols_bottom = ["JPM", "V", "UNH"]
 cols_bottom = st.columns(3)
@@ -291,6 +266,6 @@ for i, symbol in enumerate(prebuilt_symbols_bottom):
         chart = generate_stock_chart(symbol)
         if chart is not None:
             st.caption(symbol)
-            st.altair_chart(chart, use_container_width=True)
+            st.line_chart(chart["Close"], use_container_width=True)
 
 st.info("Enter a stock symbol in the search bar above for detailed information and predictions.")
