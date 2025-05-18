@@ -266,7 +266,7 @@ st.subheader("Popular Stocks at a Glance")
 prebuilt_symbols = ["AAPL", "MSFT", "GOOG", "AMZN", "TSLA", "NVDA"]
 cols = st.columns(3)
 for i, symbol in enumerate(prebuilt_symbols):
-    with cols.empty()[i % 3]:
+    with cols[i % 3]:
         chart = generate_stock_chart(symbol)
         if chart is not None:
             st.caption(symbol)
@@ -275,7 +275,7 @@ for i, symbol in enumerate(prebuilt_symbols):
 prebuilt_symbols_bottom = ["JPM", "V", "UNH"]
 cols_bottom = st.columns(3)
 for i, symbol in enumerate(prebuilt_symbols_bottom):
-    with cols_bottom.empty()[i % 3]:
+    with cols_bottom[i % 3]:
         chart = generate_stock_chart(symbol)
         if chart is not None:
             st.caption(symbol)
