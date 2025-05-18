@@ -81,7 +81,7 @@ def format_stock_info(stock: Dict) -> str:
     )
 
 # === FUNCTION TO FETCH STOCK DATA AND GENERATE A CHART ===
-def generate_stock_chart(symbol: str) -> Optional\[pd.DataFrame]:  # Changed px.Figure to pd.DataFrame
+def generate_stock_chart(symbol: str):  # Changed px.Figure to pd.DataFrame
     try:
         data = yf.download(symbol, period="1y")  # Download 1 year of data
         if data.empty:
@@ -95,7 +95,7 @@ def generate_stock_chart(symbol: str) -> Optional\[pd.DataFrame]:  # Changed px.
         return None
 
 # === FUNCTION TO GET KPIS ===
-def get_kpis(symbol: str) -> Dict:
+def get_kpis(symbol: str):
     try:
         ticker = yf.Ticker(symbol.upper())
         info = ticker.info
@@ -117,7 +117,7 @@ def get_kpis(symbol: str) -> Dict:
         return {}
 
 # === FUNCTION FOR SIMPLE STOCK PREDICTION (MOVING AVERAGE) ===
-def predict_stock_price(symbol: str, window=20) -> Optional\[float]:  # window = days for moving average
+def predict_stock_price(symbol: str, window=20):  # window = days for moving average
     try:
         data = yf.download(symbol, period="1y")
         if data.empty:
