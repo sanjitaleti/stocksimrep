@@ -45,7 +45,7 @@ def extract_stock_from_query(query: str) -> str:
         return "general"
 
 # === STOCK DATA FETCHER ===
-def fetch_stock_info(symbol: str) -> Optional\[Dict]:
+def fetch_stock_info(symbol: str):
     try:
         ticker = yf.Ticker(symbol.upper())
         info = ticker.info
